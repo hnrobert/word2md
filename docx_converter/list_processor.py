@@ -51,6 +51,54 @@ class ListProcessor:
 
         return False
 
+    def _get_list_level(self, paragraph: Paragraph) -> int:
+        """Determine the list level (indentation depth) of a paragraph"""
+        try:
+            # Check for numbering format in paragraph properties
+            if paragraph._element.pPr is not None:
+                numPr = paragraph._element.pPr.find(
+                    './/{http://schemas.openxmlformats.org/wordprocessingml/2006/main}numPr')
+                if numPr is not None:
+                    # Try to get the list level from numbering properties
+                    ilvl = numPr.find(
+                        './/{http://schemas.openxmlformats.org/wordprocessingml/2006/main}ilvl')
+                    if ilvl is not None:
+                        level = ilvl.get(
+                            '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}val')
+                        if level is not None:
+                            return int(level)
+
+                # Check indentation from paragraph properties
+                ind = paragraph._element.pPr.find(
+                    './/{http://schemas.openxmlformats.org/wordprocessingml/2006/main}ind')
+                if ind is not None:
+                    left_val = ind.get(
+                        '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}left')
+                    hanging_val = ind.get(
+                        '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}hanging')
+
+                    if left_val:
+                        # Convert twips to approximate indentation level
+                        # 1 inch = 1440 twips, typical indent is about 0.5 inch per level
+                        indent_twips = int(left_val)
+                        # 720 twips ≈ 0.5 inch
+                        level = max(0, indent_twips // 720)
+                        return min(level, 5)  # Cap at reasonable level
+
+            # Fallback: analyze text for visual markers
+            text = paragraph.text.strip()
+            if text.startswith('o\t') or text.startswith('o '):
+                return 1  # Sub-item
+            elif text.startswith('▪') or text.startswith('◦'):
+                return 1
+            elif text.startswith('\t'):
+                return text.count('\t')
+
+        except Exception:
+            pass
+
+        return 0  # Default to top level
+
     def convert_list_item(self, paragraph: Paragraph) -> None:
         """Convert list item"""
         text = paragraph.text.strip()
@@ -58,6 +106,9 @@ class ListProcessor:
         # Check paragraph style
         style_name = paragraph.style.name.lower(
         ) if paragraph.style and paragraph.style.name else ''
+
+        # Detect list level from indentation or numbering format
+        list_level = self._get_list_level(paragraph)
 
         # Determine list type
         is_ordered = self._determine_list_type(text, style_name)
@@ -72,20 +123,24 @@ class ListProcessor:
             # Start new list or list type changed
             self.in_list = True
             self.list_type = current_list_type
+            self.current_list_level = list_level
             if is_ordered:
-                self.list_counters[self.current_list_level] = 1
+                self.list_counters[list_level] = 1
+        else:
+            # Update current level
+            self.current_list_level = list_level
 
         # Generate list marker
         if is_ordered:
             # Use counter to generate correct sequence number
-            counter = self.list_counters.get(self.current_list_level, 1)
+            counter = self.list_counters.get(list_level, 1)
             list_marker = f"{counter}."
-            self.list_counters[self.current_list_level] = counter + 1
+            self.list_counters[list_level] = counter + 1
         else:
             list_marker = '-'
 
-        # Add appropriate indentation
-        indent = '  ' * self.current_list_level
+        # Add appropriate indentation based on list level
+        indent = '  ' * list_level
         formatted_text = self.text_formatter.convert_paragraph_formatting(
             paragraph, cleaned_text)
         self.output_lines.append(f"{indent}{list_marker} {formatted_text}")

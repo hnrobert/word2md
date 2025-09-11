@@ -87,6 +87,10 @@ class DocxToMarkdownConverter:
             final_output_path = self._get_final_output_path(
                 input_path, output_path)
             self._write_output(markdown_content, final_output_path)
+
+            # Clean up empty assets directory
+            self._cleanup_empty_assets_dir()
+
             logger.info(
                 f"Conversion completed, output file: {final_output_path}")
 
@@ -139,3 +143,18 @@ class DocxToMarkdownConverter:
 
         with open(output_path, 'w', encoding='utf-8') as f:
             f.write(content)
+
+    def _cleanup_empty_assets_dir(self):
+        """Remove assets directory if it's empty"""
+        if self.assets_dir and os.path.exists(self.assets_dir):
+            try:
+                # Check if assets directory is empty
+                if not os.listdir(self.assets_dir):
+                    os.rmdir(self.assets_dir)
+                    logger.debug(
+                        f"Removed empty assets directory: {self.assets_dir}")
+                else:
+                    logger.debug(
+                        f"Assets directory not empty, keeping: {self.assets_dir}")
+            except OSError as e:
+                logger.debug(f"Could not remove assets directory: {e}")

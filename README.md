@@ -16,14 +16,15 @@ A Python-based DOCX to Markdown converter that supports converting Microsoft Wor
 - ✅ Batch conversion support
 - ✅ Smart title handling with proper heading level adjustment
 - ✅ Intelligent formatting merge (e.g., adjacent underline tags)
+- ✅ Font-size based heading detection (when no heading styles are present)
 
 ## Installation
 
 ### Install from source
 
 ```bash
-git clone https://github.com/HNRobert/docx-markdown-converter.git
-cd docx-markdown-converter
+git clone https://github.com/HNRobert/docx2md.git
+cd docx2md
 pip install -e .
 ```
 
@@ -89,7 +90,7 @@ python main.py document.docx
 The project is now organized as a modular package:
 
 ```text
-docx-markdown-converter/
+docx2md/
 ├── main.py                    # Main entry point
 ├── docx_converter/            # Main package
 │   ├── __init__.py           # Package initialization
@@ -116,6 +117,17 @@ docx-markdown-converter/
 - **Bold** → `**Bold**`
 - _Italic_ → `*Italic*`
 - <u>Underline</u> → `<u>Underline</u>`
+
+### Heading Detection
+
+The converter supports multiple methods for detecting headings:
+
+1. **Style-based detection**: Converts Word heading styles (Heading 1-6, Title) to Markdown headings
+2. **Font-size based detection**: When no heading styles are present, automatically detects headings based on font size hierarchy
+   - Analyzes all paragraphs with uniform font sizes
+   - Determines the baseline font size (most common size, usually normal text)
+   - Assigns heading levels to larger font sizes in descending order
+   - Example: If baseline is 12pt, then 18pt → # (H1), 16pt → ## (H2), 14pt → ### (H3)
 
 ### Headings
 
@@ -189,7 +201,7 @@ This is a paragraph with **bold text**, _italic text_, and <u>underlined text</u
 ### Current Project Structure
 
 ```text
-docx-markdown-converter/
+docx2md/
 ├── main.py                    # Main entry point
 ├── docx_converter/            # Main package
 │   ├── __init__.py           # Package initialization

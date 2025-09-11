@@ -1,2 +1,1 @@
 python-docx>=0.8.11
-setuptools>=80.9.0

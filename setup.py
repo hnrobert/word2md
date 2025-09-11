@@ -13,13 +13,13 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
                     and not line.startswith("#")]
 
 setup(
-    name="docx-markdown-converter",
+    name="docx2md",
     version="1.0.0",
     author="HNRobert",
     description="A Python tool for converting Microsoft Word documents (.docx) to Markdown format",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/HNRobert/docx-markdown-converter",
+    url="https://github.com/HNRobert/docx2md",
     packages=find_packages(),
     classifiers=[
         "Development Status :: 4 - Beta",
