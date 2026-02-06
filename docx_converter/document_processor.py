@@ -6,10 +6,9 @@ from typing import Any, List, Dict
 
 from .paragraph_processor import ParagraphProcessor
 from .table_processor import TableProcessor
-from .utils import find_font_size_based_headings, clean_markdown_content
+from .utils import find_font_size_based_headings
 
 try:
-    from docx import Document
     from docx.table import Table
     from docx.text.paragraph import Paragraph
 except ImportError:

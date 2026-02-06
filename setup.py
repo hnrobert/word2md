@@ -16,7 +16,7 @@ setup(
     name="docx2md",
     version="1.0.0",
     author="HNRobert",
-    description="A Python tool for converting Microsoft Word documents (.docx) to Markdown format",
+    description="A Python tool for converting Microsoft Word documents (.docx/.doc) to Markdown format",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/HNRobert/docx2md",

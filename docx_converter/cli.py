@@ -23,6 +23,7 @@ def main():
 Example usage:
   %(prog)s input.docx                    # Output to stdout
   %(prog)s input.docx -o output.md       # Output to file
+    %(prog)s input.doc                     # Legacy .doc (requires LibreOffice)
   %(prog)s *.docx -o output_dir/         # Batch conversion
         """
     )
@@ -30,7 +31,7 @@ Example usage:
     parser.add_argument(
         'input_files',
         nargs='+',
-        help='Input DOCX file paths (supports wildcards)'
+        help='Input Word file paths (.docx or .doc; supports wildcards)'
     )
 
     parser.add_argument(
@@ -65,8 +66,8 @@ Example usage:
                 continue
 
             for file_path in matching_files:
-                if not file_path.lower().endswith('.docx'):
-                    logger.warning(f"Skipping non-DOCX file: {file_path}")
+                if not file_path.lower().endswith(('.docx', '.doc')):
+                    logger.warning(f"Skipping non-Word file: {file_path}")
                     continue
 
                 # Determine output path

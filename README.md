@@ -1,6 +1,6 @@
 # DOCX to Markdown Converter
 
-A Python-based DOCX to Markdown converter that supports converting Microsoft Word documents to Markdown format.
+A Python-based Word to Markdown converter for Microsoft Word documents.
 
 ## Features
 
@@ -17,6 +17,7 @@ A Python-based DOCX to Markdown converter that supports converting Microsoft Wor
 - ✅ Smart title handling with proper heading level adjustment
 - ✅ Intelligent formatting merge (e.g., adjacent underline tags)
 - ✅ Font-size based heading detection (when no heading styles are present)
+- ✅ Legacy `.doc` support via LibreOffice conversion
 
 ## Installation
 
@@ -40,6 +41,30 @@ Or install directly:
 pip install python-docx
 ```
 
+### Optional: legacy `.doc` support
+
+Python `python-docx` cannot read `.doc` files directly. This project supports `.doc` by converting it to a temporary `.docx` using LibreOffice.
+
+- macOS: `brew install --cask libreoffice`
+- Ensure the `soffice` command is available in your `PATH` (LibreOffice installs it).
+- Alternatively, you can set the `DOCX2MD_SOFFICE_PATH` environment variable to the full path of your LibreOffice `soffice` executable (useful on Windows or custom installs).
+
+Examples:
+
+- macOS / Linux (bash/zsh):
+
+```bash
+# export the path to soffice binary
+export DOCX2MD_SOFFICE_PATH=/Applications/LibreOffice.app/Contents/MacOS/soffice
+```
+
+- Windows (PowerShell):
+
+```powershell
+# set environment variable for current session
+$env:DOCX2MD_SOFFICE_PATH = 'C:\\Program Files\\LibreOffice\\program\\soffice.exe'
+```
+
 ## Usage
 
 ### Command Line Tool
@@ -49,6 +74,9 @@ After installation, you can use the `docx2md` command:
 ```bash
 # Convert single file
 docx2md document.docx
+
+# Convert legacy .doc (requires LibreOffice)
+docx2md document.doc
 
 # Specify output file
 docx2md document.docx -o output.md
@@ -67,6 +95,9 @@ You can also run the converter directly:
 ```bash
 # Convert single file to auto-generated folder structure
 python main.py document.docx
+
+# Convert legacy .doc (requires LibreOffice)
+python main.py document.doc
 
 # Specify output file
 python main.py document.docx -o output.md
@@ -124,7 +155,7 @@ The converter supports multiple methods for detecting headings:
 
 1. **Style-based detection**: Converts Word heading styles (Heading 1-6, Title) to Markdown headings
 2. **Font-size based detection**: When no heading styles are present, automatically detects headings based on font size hierarchy
-   - Analyzes all paragraphs with uniform font sizes
+   - Analyses all paragraphs with uniform font sizes
    - Determines the baseline font size (most common size, usually normal text)
    - Assigns heading levels to larger font sizes in descending order
    - Example: If baseline is 12pt, then 18pt → # (H1), 16pt → ## (H2), 14pt → ### (H3)

@@ -6,7 +6,8 @@ Core converter module for DOCX to Markdown conversion.
 import logging
 import os
 import shutil
-import zipfile
+import subprocess
+import tempfile
 from pathlib import Path
 from typing import Optional
 
@@ -45,6 +46,9 @@ class DocxToMarkdownConverter:
         Returns:
             Markdown content string
         """
+        temp_dir: Optional[str] = None
+        temp_docx_path: Optional[str] = None
+
         try:
             # Check if input file exists
             if not os.path.exists(input_path):
@@ -54,9 +58,17 @@ class DocxToMarkdownConverter:
             # Setup output structure
             self._setup_output_structure(input_path, output_path)
 
+            # Convert legacy .doc to a temporary .docx (python-docx can't open .doc)
+            effective_input_path = input_path
+            if input_path.lower().endswith('.doc'):
+                temp_dir = tempfile.mkdtemp(prefix='docx2md_', suffix='_docx')
+                temp_docx_path = self._convert_doc_to_docx(
+                    input_path, temp_dir)
+                effective_input_path = temp_docx_path
+
             # Load DOCX document
-            logger.info(f"Loading document: {input_path}")
-            doc = Document(input_path)
+            logger.info(f"Loading document: {effective_input_path}")
+            doc = Document(effective_input_path)
 
             # Reset output
             self.output_lines = []
@@ -75,7 +87,7 @@ class DocxToMarkdownConverter:
 
             # Extract images first
             if self.image_extractor and self.assets_dir:
-                self.image_extractor.extract_images(input_path)
+                self.image_extractor.extract_images(effective_input_path)
 
             # Convert document content
             self.document_processor.convert_document(doc)
@@ -99,6 +111,151 @@ class DocxToMarkdownConverter:
         except Exception as e:
             logger.error(f"Error occurred during conversion: {str(e)}")
             raise
+        finally:
+            # Clean up temporary conversion artifacts
+            if temp_docx_path:
+                try:
+                    os.remove(temp_docx_path)
+                except OSError:
+                    pass
+            if temp_dir:
+                try:
+                    shutil.rmtree(temp_dir, ignore_errors=True)
+                except OSError:
+                    pass
+
+    def _convert_doc_to_docx(self, input_doc_path: str, out_dir: str) -> str:
+        """Convert a legacy .doc file to .docx using LibreOffice/soffice.
+
+        Returns the converted .docx path.
+        """
+        soffice_path = self._find_soffice_executable()
+
+        # LibreOffice writes the output docx into out_dir, keeping the base name.
+        cmd = [
+            soffice_path,
+            '--headless',
+            '--nologo',
+            '--nofirststartwizard',
+            '--convert-to',
+            'docx',
+            '--outdir',
+            out_dir,
+            input_doc_path,
+        ]
+
+        logger.info(
+            f"Converting .doc to .docx via LibreOffice: {input_doc_path}")
+        try:
+            subprocess.run(cmd, check=True, stdout=subprocess.PIPE,
+                           stderr=subprocess.PIPE)
+        except FileNotFoundError as e:
+            raise RuntimeError(
+                "LibreOffice (soffice) not found. Install LibreOffice to convert .doc files. "
+                "On macOS: brew install --cask libreoffice"
+            ) from e
+        except subprocess.CalledProcessError as e:
+            stderr = (e.stderr or b'').decode('utf-8', errors='replace')
+            raise RuntimeError(
+                f"Failed to convert .doc to .docx using LibreOffice. Details: {stderr.strip()}"
+            ) from e
+
+        expected = os.path.join(out_dir, f"{Path(input_doc_path).stem}.docx")
+        if os.path.exists(expected):
+            return expected
+
+        # Fallback: find any produced .docx
+        candidates = [p for p in Path(out_dir).glob('*.docx') if p.is_file()]
+        if len(candidates) == 1:
+            return str(candidates[0])
+        if candidates:
+            # If multiple, pick the newest
+            newest = max(candidates, key=lambda p: p.stat().st_mtime)
+            return str(newest)
+
+        raise RuntimeError(
+            "LibreOffice reported success but no .docx was produced.")
+
+    def _find_soffice_executable(self) -> str:
+        """Locate LibreOffice command for headless conversion across OSes.
+
+        Order of checks:
+        1. Environment variable `DOCX2MD_SOFFICE_PATH`
+        2. Common executable names on PATH: `soffice`, `libreoffice`
+        3. Known installation paths per-platform (macOS, Windows, common Linux locations)
+        4. Flatpak/exported paths
+        Raises a RuntimeError with helpful instructions if not found.
+        """
+        import platform
+
+        # 1) Allow explicit override via environment variable
+        env_path = os.environ.get(
+            'DOCX2MD_SOFFICE_PATH') or os.environ.get('SOFFICE_PATH')
+        if env_path:
+            if os.path.exists(env_path) and os.access(env_path, os.X_OK):
+                return env_path
+            else:
+                raise RuntimeError(
+                    f"DOCX2MD_SOFFICE_PATH is set to '{env_path}' but file is not executable or doesn't exist.")
+
+        # 2) Common executable names on PATH
+        for name in ('soffice', 'libreoffice'):
+            found = shutil.which(name)
+            if found:
+                return found
+
+        system = platform.system()
+
+        # 3) Platform-specific likely locations
+        candidates = []
+
+        if system == 'Darwin':  # macOS
+            candidates += [
+                '/Applications/LibreOffice.app/Contents/MacOS/soffice',
+                '/Applications/LibreOffice.app/Contents/MacOS/soffice.bin',
+                '/usr/local/bin/soffice',
+                '/opt/homebrew/bin/soffice',
+                '/opt/local/bin/soffice',
+            ]
+        elif system == 'Windows':  # Windows
+            program_files = os.environ.get('ProgramFiles', r'C:\Program Files')
+            program_files_x86 = os.environ.get(
+                'ProgramFiles(x86)', r'C:\Program Files (x86)')
+            candidates += [
+                os.path.join(program_files, 'LibreOffice',
+                             'program', 'soffice.exe'),
+                os.path.join(program_files_x86, 'LibreOffice',
+                             'program', 'soffice.exe'),
+            ]
+        else:  # Linux / other Unix
+            candidates += [
+                '/usr/bin/libreoffice',
+                '/usr/bin/soffice',
+                '/usr/local/bin/libreoffice',
+                '/usr/local/bin/soffice',
+                '/snap/bin/libreoffice',
+            ]
+
+        # 4) Check flatpak / exported locations
+        candidates += [
+            '/var/lib/flatpak/exports/bin/libreoffice',
+            '/var/lib/flatpak/exports/bin/soffice',
+        ]
+
+        # Verify candidate paths
+        for p in candidates:
+            if p and os.path.exists(p) and os.access(p, os.X_OK):
+                return p
+
+        # Nothing found — provide a helpful error message
+        hint_lines = [
+            'LibreOffice (soffice) not found on this system.',
+            'To enable .doc support the converter needs LibreOffice for .doc → .docx conversion.',
+            'Options:',
+            "  * Install LibreOffice and ensure `soffice` is on PATH (macOS: `brew install --cask libreoffice`).",
+            "  * Set the environment variable `DOCX2MD_SOFFICE_PATH` to the soffice executable path.",
+        ]
+        raise RuntimeError('\n'.join(hint_lines))
 
     def _setup_output_structure(self, input_path: str, output_path: Optional[str]):
         """Setup output folder structure"""
