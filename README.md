@@ -4,20 +4,20 @@ A Python-based Word to Markdown converter for Microsoft Word documents.
 
 ## Features
 
-- ✅ Support for heading conversion (H1-H6)
-- ✅ Support for paragraph text
-- ✅ Support for bold, italic, underline formatting
-- ✅ Support for ordered and unordered lists
-- ✅ Support for table conversion
-- ✅ Support for image extraction and conversion
-- ✅ Automatic folder structure creation
-- ✅ Automatic blank line and format cleanup
-- ✅ Command line interface
-- ✅ Batch conversion support
-- ✅ Smart title handling with proper heading level adjustment
-- ✅ Intelligent formatting merge (e.g., adjacent underline tags)
-- ✅ Font-size based heading detection (when no heading styles are present)
-- ✅ Legacy `.doc` support via LibreOffice conversion
+- [x] Support for heading conversion (H1-H6)
+- [x] Support for paragraph text
+- [x] Support for bold, italic, underline formatting
+- [x] Support for ordered and unordered lists
+- [x] Support for table conversion
+- [x] Support for image extraction and conversion
+- [x] Automatic folder structure creation
+- [x] Automatic blank line and format cleanup
+- [x] Command line interface
+- [x] Batch conversion support
+- [x] Smart title handling with proper heading level adjustment
+- [x] Intelligent formatting merge (e.g., adjacent underline tags)
+- [x] Font-size based heading detection (when no heading styles are present)
+- [x] Legacy `.doc` support via LibreOffice conversion
 
 ## Installation
 

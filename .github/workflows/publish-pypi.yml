@@ -39,12 +39,17 @@ jobs:
         id: bump
         run: |
           set -o pipefail
-          out=$(python scripts/bump_version.py "${{ github.event.inputs.version }}")
+          # Run bump script and capture full output+exit code
+          output=$(python scripts/bump_version.py "${{ github.event.inputs.version }}")
           rc=$?
-          echo "normalized=$out" >> "$GITHUB_OUTPUT"
+          # normalized version should be the first line of output
+          normalized=$(printf '%s\n' "$output" | head -n1)
+          echo "normalized=$normalized" >> "$GITHUB_OUTPUT"
           echo "bump_rc=$rc" >> "$GITHUB_OUTPUT"
           if [ $rc -eq 1 ]; then
             echo "Invalid version provided: ${{ github.event.inputs.version }}"
+            # print traceback (rest of output) to logs for debugging
+            printf '%s\n' "$output" >&2
             exit 1
           fi
 
