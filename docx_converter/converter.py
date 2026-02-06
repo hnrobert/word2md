@@ -189,14 +189,14 @@ class DocxToMarkdownConverter:
         import platform
 
         # 1) Allow explicit override via environment variable
-        env_path = os.environ.get(
+        env_path = os.environ.get('DOCX2MD_SOFFICE_PATH') or os.environ.get(
             'WORD2MD_SOFFICE_PATH') or os.environ.get('SOFFICE_PATH')
         if env_path:
             if os.path.exists(env_path) and os.access(env_path, os.X_OK):
                 return env_path
             else:
                 raise RuntimeError(
-                    f"WORD2MD_SOFFICE_PATH is set to '{env_path}' but file is not executable or doesn't exist.")
+                    f"Environment variable set to '{env_path}' but file is not executable or doesn't exist. Set DOCX2MD_SOFFICE_PATH or WORD2MD_SOFFICE_PATH to a valid soffice path.")
 
         # 2) Common executable names on PATH
         for name in ('soffice', 'libreoffice'):

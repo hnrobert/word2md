@@ -297,6 +297,24 @@ Add new processors in the `docx_converter/` directory and integrate them via `do
 4. Test with various DOCX files
 5. Update documentation
 
+### Manual publish to PyPI (workflow)
+
+This repository provides a manual GitHub Action to publish the package to PyPI. The workflow is triggered via the Actions UI (Manual publish to PyPI → Run workflow).
+
+Behavior:
+
+- It requires a `version` input (semantic version like `1.0.1`).
+- It will update `docx_converter/__init__.py` and `setup.py` with the provided version.
+- If files change, it commits & pushes the change back to the `main` branch and optionally creates a `v<version>` tag.
+- Finally it builds `sdist`+`wheel` and publishes to PyPI using the `PYPI_API_TOKEN` secret.
+
+Set up:
+
+- Add `PYPI_API_TOKEN` as a repository secret (Repository Settings → Secrets and variables → Actions → New repository secret).
+- Trigger the workflow via the Actions page and supply `version` (and `tag` if you want a tag created).
+
+Note: The workflow only runs on manual dispatch to avoid accidental publishes on routine pushes.
+
 ## Notes
 
 1. The converter primarily supports basic document formats; complex formatting may require manual adjustment

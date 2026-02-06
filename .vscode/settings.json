@@ -29,6 +29,7 @@
         "pyflow",
         "pypa",
         "pypackages",
+        "PYPI",
         "pypirc",
         "pytest",
         "pytype",
