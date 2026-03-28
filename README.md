@@ -84,6 +84,9 @@ word2md document.docx -o output.md
 # Show verbose output
 word2md document.docx -v
 
+# Ignore all images and output a single Markdown file
+word2md document.docx --ignore-images
+
 # Batch conversion
 word2md *.docx -o output_directory/
 ```
@@ -104,6 +107,9 @@ python main.py document.docx -o output.md
 
 # Show verbose output
 python main.py document.docx -o output.md -v
+
+# Ignore all images and output a single Markdown file
+python main.py document.docx --ignore-images
 ```
 
 ### Advanced Usage
@@ -179,6 +185,7 @@ The converter supports multiple methods for detecting headings:
 - Automatic extraction of images from DOCX
 - Save to `assets/` directory under document name folder
 - Create proper image references in Markdown: `![Image](./assets/image_001.png)`
+- Optional `--ignore-images` / `--no-images` mode to skip all images
 
 ## Output Structure
 
@@ -191,6 +198,12 @@ document_name/
     ├── image_001.jpg
     ├── image_002.png
     └── ...
+```
+
+When using `--ignore-images`, output is a single Markdown file (no subfolder and no `assets/` directory):
+
+```text
+document_name.md
 ```
 
 ## Example
@@ -301,7 +314,7 @@ Add new processors in the `docx_converter/` directory and integrate them via `do
 
 This repository provides a manual GitHub Action to publish the package to PyPI. The workflow is triggered via the Actions UI (Manual publish to PyPI → Run workflow).
 
-Behavior:
+Behaviour:
 
 - It requires a `version` input (semantic version like `1.0.1`).
 - It will update `docx_converter/__init__.py` and `setup.py` with the provided version.

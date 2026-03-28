@@ -45,6 +45,13 @@ Example usage:
         help='Show verbose output'
     )
 
+    parser.add_argument(
+        '--ignore-images',
+        '--no-images',
+        action='store_true',
+        help='Ignore all images and output a single Markdown file (no assets folder)'
+    )
+
     args = parser.parse_args()
 
     # Set logging level
@@ -84,7 +91,10 @@ Example usage:
 
                 # Execute conversion
                 markdown_content = converter.convert_file(
-                    file_path, output_path)
+                    file_path,
+                    output_path,
+                    ignore_images=args.ignore_images,
+                )
 
                 # If no output file specified, print to stdout
                 if not output_path:

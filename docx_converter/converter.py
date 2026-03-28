@@ -32,16 +32,18 @@ class DocxToMarkdownConverter:
         self.output_lines = []
         self.output_folder = None
         self.assets_dir = None
+        self.ignore_images = False
         self.document_processor = None
         self.image_extractor = None
 
-    def convert_file(self, input_path: str, output_path: Optional[str] = None) -> str:
+    def convert_file(self, input_path: str, output_path: Optional[str] = None, ignore_images: bool = False) -> str:
         """
         Convert DOCX file to Markdown format
 
         Args:
             input_path: Input DOCX file path
             output_path: Output Markdown file path (optional)
+            ignore_images: Ignore all images and output only Markdown file
 
         Returns:
             Markdown content string
@@ -54,6 +56,8 @@ class DocxToMarkdownConverter:
             if not os.path.exists(input_path):
                 raise FileNotFoundError(
                     f"Input file does not exist: {input_path}")
+
+            self.ignore_images = ignore_images
 
             # Setup output structure
             self._setup_output_structure(input_path, output_path)
@@ -74,7 +78,7 @@ class DocxToMarkdownConverter:
             self.output_lines = []
 
             # Initialize processors
-            if self.assets_dir:
+            if self.assets_dir and not self.ignore_images:
                 self.image_extractor = ImageExtractor(self.assets_dir)
             else:
                 # Fallback if assets_dir is None
@@ -86,7 +90,7 @@ class DocxToMarkdownConverter:
             )
 
             # Extract images first
-            if self.image_extractor and self.assets_dir:
+            if self.image_extractor and self.assets_dir and not self.ignore_images:
                 self.image_extractor.extract_images(effective_input_path)
 
             # Convert document content
@@ -260,6 +264,22 @@ class DocxToMarkdownConverter:
     def _setup_output_structure(self, input_path: str, output_path: Optional[str]):
         """Setup output folder structure"""
         input_stem = Path(input_path).stem
+        input_dir = os.path.dirname(input_path)
+
+        # Ignore-images mode writes a single Markdown file and never creates assets.
+        if self.ignore_images:
+            if output_path:
+                if os.path.isdir(output_path) or output_path.endswith('/'):
+                    self.output_folder = output_path.rstrip('/').rstrip('\\')
+                else:
+                    self.output_folder = os.path.dirname(output_path)
+            else:
+                self.output_folder = input_dir
+
+            self.assets_dir = None
+            if self.output_folder:
+                os.makedirs(self.output_folder, exist_ok=True)
+            return
 
         if output_path:
             if os.path.isdir(output_path) or output_path.endswith('/'):
@@ -279,6 +299,15 @@ class DocxToMarkdownConverter:
     def _get_final_output_path(self, input_path: str, output_path: Optional[str]) -> str:
         """Get the final output file path"""
         input_stem = Path(input_path).stem
+        input_dir = os.path.dirname(input_path)
+
+        if self.ignore_images:
+            if output_path:
+                if os.path.isdir(output_path) or output_path.endswith('/'):
+                    return os.path.join(output_path, f"{input_stem}.md")
+                return output_path
+
+            return os.path.join(input_dir, f"{input_stem}.md") if input_dir else f"{input_stem}.md"
 
         if output_path:
             if os.path.isdir(output_path) or output_path.endswith('/'):
