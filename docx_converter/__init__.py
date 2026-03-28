@@ -9,7 +9,7 @@ Supports conversion of text, headings, lists, tables, links and other basic form
 from .cli import main
 from .converter import DocxToMarkdownConverter
 
-__version__ = "1.0.2"
+__version__ = "1.0.3"
 __author__ = "hnrobert"
 
 __all__ = ['DocxToMarkdownConverter', 'main']
