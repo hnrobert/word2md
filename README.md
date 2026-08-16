@@ -41,18 +41,6 @@ cd word2md
 pip install -e .
 ```
 
-### Install dependencies only
-
-```bash
-pip install -r requirements.txt
-```
-
-Or install directly:
-
-```bash
-pip install python-docx
-```
-
 ### Optional: legacy `.doc` support
 
 Python `python-docx` cannot read `.doc` files directly. This project supports `.doc` by converting it to a temporary `.docx` using LibreOffice.
