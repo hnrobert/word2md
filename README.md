@@ -21,6 +21,18 @@ A Python-based Word to Markdown converter for Microsoft Word documents.
 
 ## Installation
 
+### Install from PyPI (recommended)
+
+```bash
+pip install word2md
+```
+
+Upgrade to the latest version:
+
+```bash
+pip install --upgrade word2md
+```
+
 ### Install from source
 
 ```bash
